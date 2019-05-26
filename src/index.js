@@ -26,15 +26,13 @@ function preprocessSync (...args) {
 
 function loadConfig () {
   const explorer = cosmiconfig(packageName)
-  let done = false
   let config
 
-  explorer.search()
-    .then(result => (config = result.config))
-    .catch(error => log.trace(error))
-    .finally(() => (done = true))
-
-  loopWhile(() => !done)
+  try {
+    ({ config } = explorer.searchSync())
+  } catch (error) {
+    log.trace(error)
+  }
 
   return config
 }
