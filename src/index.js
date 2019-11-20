@@ -69,7 +69,8 @@ module.exports = {
 
     const { code: processedCode } = preprocessSync(
       src,
-      config && config.preprocessors
+      config && config.preprocessors,
+      { filename }
     )
 
     const { js, warnings } = compile(
