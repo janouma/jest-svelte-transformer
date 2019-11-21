@@ -1,40 +1,27 @@
 'use strict'
 
-const cosmiconfig = require('cosmiconfig')
 const { statSync } = require('fs')
 const uuid = require('uuid/v4')
-const { compile, preprocess } = require('svelte/compiler')
+const { compile } = require('svelte/compiler')
 const log = require('loglevel')
-const { loopWhile } = require('deasync')
+const { execSync } = require('child_process')
+const { join } = require('path')
 const { transform } = require('@babel/core')
-const packageName = require('../package.json').name
+const loadConfig = require('./config_loader')
 
 log.setLevel(process.env.LOG_LEVEL || 'info')
 
-function preprocessSync (...args) {
-  let done = false
-  let output
+const convertToCliArg = src => src
+  .replace(/\\/g, '\\\\')
+  .replace(/"/g, '\\"')
+  .replace(/`/g, '\\`')
+  .replace(/\$(?=\{.*?\})/g, '\\$')
 
-  preprocess(...args)
-    .then(result => (output = result))
-    .finally(() => (done = true))
+function preprocessSync (src, filename) {
+  const preprocessorPath = join(__dirname, 'preprocessor')
+  const code = execSync(`node ${preprocessorPath} "${convertToCliArg(src)}" "${filename}"`)
 
-  loopWhile(() => !done)
-
-  return output
-}
-
-function loadConfig () {
-  const explorer = cosmiconfig(packageName)
-  let config
-
-  try {
-    ({ config } = explorer.searchSync())
-  } catch (error) {
-    log.trace(error)
-  }
-
-  return config
+  return String(code)
 }
 
 const cache = {}
@@ -66,12 +53,7 @@ module.exports = {
 
   process (src, filename) {
     const config = loadConfig()
-
-    const { code: processedCode } = preprocessSync(
-      src,
-      config && config.preprocessors,
-      { filename }
-    )
+    const processedCode = preprocessSync(src, filename)
 
     const { js, warnings } = compile(
       processedCode,
@@ -95,6 +77,6 @@ module.exports = {
       inputSourceMap: js.map
     })
 
-    return transformedCode || src
+    return transformedCode || js
   }
 }
