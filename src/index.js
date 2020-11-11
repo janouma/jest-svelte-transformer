@@ -65,7 +65,7 @@ module.exports = {
       }
     )
 
-    if (warnings && warnings.length) {
+    if (warnings && warnings.length && (!config || config.showWarnings)) {
       log.warn(
         warnings.map(({ message, frame }) => `${message}\n${frame}`)
           .join('\n\n')
