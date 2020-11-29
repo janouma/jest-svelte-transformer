@@ -15,7 +15,7 @@ const convertToCliArg = src => src
   .replace(/\\/g, '\\\\')
   .replace(/"/g, '\\"')
   .replace(/`/g, '\\`')
-  .replace(/\$(?=\{.*?\})/g, '\\$')
+  .replace(/\$/g, '\\$')
 
 function preprocessSync (src, filename) {
   const preprocessorPath = join(__dirname, 'preprocessor')
